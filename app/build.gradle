@@ -1,0 +1,87 @@
+apply plugin: 'com.android.application'
+
+apply plugin: 'kotlin-android'
+
+apply plugin: 'kotlin-android-extensions'
+
+android {
+    signingConfigs {
+        release {
+            // can be modified during execution, but storeFile must be set at configuration for APK to be signed
+            storeFile file("production.keystore")
+            storePassword ''
+            keyAlias 'mykey'
+            keyPassword ''
+        }
+    }
+
+    compileSdkVersion 28
+    defaultConfig {
+        applicationId "com.pinterest.signingconfigbug"
+        minSdkVersion 21
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        signingConfig signingConfigs.release
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    productFlavors {
+        flavorDimensions "environment"
+        production {
+            dimension "environment"
+            applicationId android.defaultConfig.applicationId + ".prod"
+        }
+
+        nonproduction {
+            dimension "environment"
+            applicationId android.defaultConfig.applicationId + ".nonprod"
+        }
+    }
+}
+
+task updateNonProductionSigningConfig(type: UpdateSigningConfigTask) {
+    storeFile = file("nonproduction.keystore")
+    keyPassword = 'foofoo'
+    storePassword = 'foofoo'
+    keyAlias = 'mykey'
+
+}
+
+task updateProductionSigningConfig(type: UpdateSigningConfigTask) {
+    storeFile = file("production.keystore")
+    keyPassword = 'barbar'
+    storePassword = 'barbar'
+    keyAlias = 'mykey'
+}
+
+
+tasks.whenTaskAdded { task ->
+    def taskName = task.name
+    // Have also tried:
+    // taskName.contains("validateSigning")
+    // taskName.contains("signingConfigWriter")
+    if (taskName.contains("package")) {
+        if (taskName.contains("ProductionRelease")) {
+            task.dependsOn(updateProductionSigningConfig)
+        } else if (taskName.contains("Release")) {
+            task.dependsOn(updateNonProductionSigningConfig)
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+}
