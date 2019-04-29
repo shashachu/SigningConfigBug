@@ -26,6 +26,9 @@ BUILD SUCCESSFUL in 7s
 ```
 
 ### AGP 3.3.2+ behavior/broken behavior
+
+(Tested in 3.3.2, 3.4.0, and 3.5.0-alpha13)
+
 ```
 $ ./gradlew clean assembleNonproductionRelease
 > Task :app:packageNonproductionRelease FAILED
